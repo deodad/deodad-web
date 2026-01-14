@@ -1,0 +1,104 @@
+---
+import Layout from "../layouts/Layout.astro";
+import Article from "../components/Article.astro";
+import Book from "../components/Book.astro";
+
+const internet = [
+  {
+    title: "Geeks, MOPs, and sociopaths in subculture evolution",
+    href: "https://meaningness.com/geeks-mops-sociopaths",
+    author: "David Chapman",
+  },
+  {
+    title: "Status as a Service (StaaS)",
+    href: "https://www.eugenewei.com/blog/2019/2/19/status-as-a-service",
+    author: "Eugene Wei",
+  },
+  { title: "Laws of Tech: Commoditize Your Complement",
+  href: "https://gwern.net/complement",
+    author: "Gwern"
+  }
+];
+
+const novels = [
+  { title: "Middlesex", author: "Jeffery Eugenides" },
+  { title: "East of Eden", author: "John Steinbeck" },
+  { title: "Love in the Time of Cholera", author: "Gabriel Garcia Márquez" },
+  { title: "The Brothers Karamazov", author: "Fyodor Dostoyevsky" },
+  { title: "Wolf Hunt", author: "Ivaylo Petrov" },
+];
+
+const nonFiction = [
+  { title: "The Making of the Atomic Bomb", author: "Richard Rhodes" },
+  { title: "Walden", author: "Henry David Thoreau" },
+  { title: "Seeing Like a State", author: "James C. Scott" },
+  { title: "The Guns of August", author: "Barbara W. Tuchman" },
+  {
+    title: "Things Hidden Since the Foundation of the World",
+    author: "René Girard",
+  },
+  { title: "Antifragile", author: "Nassim Nicholas Taleb" },
+  { title: "Beginning of Infinity", author: "David Deutsch" },
+];
+
+const collections = [
+  { title: "Ficciones", author: "Jorge Luis Borges" },
+  { title: "Against Everything", author: "Mark Greif" },
+  { title: "Tenth of December", author: "George Saunders" },
+  { title: "The Complete Essays", author: "Michel de Montaigne" },
+  { title: "Letters from a Stoic", author: "Seneca" },
+];
+
+const food = [
+  { title: "The Food Lab", author: "J. Kenji López-Alt" },
+  {
+    title: "An Everlasting Meal: Cooking with Economy and Grace",
+    author: "Tamar Adler",
+  },
+  { title: "The Art of Simple Food", author: "Alice Waters" },
+  { title: "4 Hour Chef", author: "Tim Ferriss" },
+  { title: "Flour Water Salt Yeast", author: "Ken Forkish" },
+];
+
+const architecture = [
+  { title: "How Buildings Learn", author: "Stewart Brand" },
+  { title: "Thermal Delight in Architecture", author: "Lisa Heschong" },
+  { title: "Timeless Way of Building", author: "Christopher Alexander" },
+  { title: "In Praise of Shadows", author: "Jun'ichirō Tanizaki" },
+  { title: "The Place of Houses", author: "Charles Moore, Gerald Allen, Donlyn Lyndon" },
+];
+---
+
+<Layout title="Reading">
+  <h1>Reading</h1>
+
+  <h3>Internet</h3>
+  <ul>
+    {internet.map((article) => <Article {...article} />)}
+  </ul>
+
+  <h3>Nonfiction</h3>
+  <ul>
+    {nonFiction.map((book) => <Book {...book} />)}
+  </ul>
+
+  <h3>Novels</h3>
+  <ul>
+    {novels.map((book) => <Book {...book} />)}
+  </ul>
+
+  <h3>Collections</h3>
+  <ul>
+    {collections.map((book) => <Book {...book} />)}
+  </ul>
+
+  <h3>Food</h3>
+  <ul>
+    {food.map((book) => <Book {...book} />)}
+  </ul>
+
+  <h3>Architecture</h3>
+  <ul>
+    {architecture.map((book) => <Book {...book} />)}
+  </ul>
+</Layout>

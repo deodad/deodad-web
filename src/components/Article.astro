@@ -1,0 +1,13 @@
+---
+interface Props {
+  title: string;
+  href: string;
+  author?: string;
+}
+
+const { title, href, author } = Astro.props;
+---
+
+<li>
+  <a href={href}>{title}</a>{author && <span class="author"> by {author}</span>}
+</li>
