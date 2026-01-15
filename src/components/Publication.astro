@@ -1,13 +1,14 @@
 ---
 interface Props {
   title: string;
-  href: string;
   author?: string;
+  href?: string;
 }
 
 const { title, href, author } = Astro.props;
 ---
 
 <li>
-  <a href={href}>{title}</a>{author && <span class="author"> by {author}</span>}
+  {href ? <a href={href}>{title}</a> : title}
+  {author && <span class="author">by {author}</span>}
 </li>

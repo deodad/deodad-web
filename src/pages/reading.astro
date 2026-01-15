@@ -1,7 +1,6 @@
 ---
 import Layout from "../layouts/Layout.astro";
-import Article from "../components/Article.astro";
-import Book from "../components/Book.astro";
+import Publication from "../components/Publication.astro";
 
 const internet = [
   {
@@ -17,6 +16,10 @@ const internet = [
   { title: "Laws of Tech: Commoditize Your Complement",
   href: "https://gwern.net/complement",
     author: "Gwern"
+    },
+  { title: "Papyrus to Paperbacks: The World That Books Made",
+  href: "https://archive.is/q7LPo#selection-297.0-300.0",
+    author: "Barbara Tuchman"
   }
 ];
 
@@ -74,31 +77,31 @@ const architecture = [
 
   <h3>Internet</h3>
   <ul>
-    {internet.map((article) => <Article {...article} />)}
+    {internet.map((article) => <Publication {...article} />)}
   </ul>
 
   <h3>Nonfiction</h3>
   <ul>
-    {nonFiction.map((book) => <Book {...book} />)}
+    {nonFiction.map((book) => <Publication {...book} />)}
   </ul>
 
   <h3>Novels</h3>
   <ul>
-    {novels.map((book) => <Book {...book} />)}
+    {novels.map((book) => <Publication {...book} />)}
   </ul>
 
   <h3>Collections</h3>
   <ul>
-    {collections.map((book) => <Book {...book} />)}
+    {collections.map((book) => <Publication {...book} />)}
   </ul>
 
   <h3>Food</h3>
   <ul>
-    {food.map((book) => <Book {...book} />)}
+    {food.map((book) => <Publication {...book} />)}
   </ul>
 
   <h3>Architecture</h3>
   <ul>
-    {architecture.map((book) => <Book {...book} />)}
+    {architecture.map((book) => <Publication {...book} />)}
   </ul>
 </Layout>

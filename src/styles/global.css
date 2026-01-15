@@ -52,7 +52,31 @@ section {
   font-size: 0.85em;
 }
 
+@media (max-width: 768px) {
+  .author {
+    display: block;
+  }
+
+  footer a {
+    display: block;
+    padding: 1em;
+    border: 3px solid currentColor;
+    text-align: center;
+    text-decoration: none;
+  }
+
+  footer a:hover {
+    text-decoration: none;
+  }
+}
+
 .date {
   color: gray;
   font-size: 0.85em;
+}
+
+footer {
+  max-width: 38em;
+  padding: 0 1em 2em;
+  border-top: none;
 }
