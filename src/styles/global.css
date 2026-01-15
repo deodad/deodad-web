@@ -8,6 +8,7 @@ main {
 }
 
 h1 {
+  font-size: 1.75rem;
   font-weight: 400;
   letter-spacing: -0.02em;
 }
@@ -53,6 +54,12 @@ section {
 }
 
 @media (max-width: 768px) {
+  .nav a {
+    display: block;
+    font-size: 1.5rem;
+    padding: 0.4em 0;
+  }
+
   .author {
     display: block;
   }
@@ -63,6 +70,7 @@ section {
     border: 3px solid currentColor;
     text-align: center;
     text-decoration: none;
+    font-size: 1.25rem;
   }
 
   footer a:hover {
