@@ -83,6 +83,15 @@
   .card li{font-size:.78rem;line-height:1.55;margin-bottom:9px}
   .card li::marker{content:"— "}
   .hint{font-size:.72rem;color:var(--ink-soft);text-align:center;margin:4px 0 12px}
+  .planrow{display:block}
+  @media (min-width:920px){
+    .planrow{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:22px;align-items:start}
+    .planrow .board{margin-bottom:26px}
+    #detail{position:sticky;top:18px;margin-bottom:0;max-height:calc(100vh - 36px);overflow-y:auto}
+    #detail h3{font-size:1.55rem}
+  }
+  #detail{transition:box-shadow .25s ease}
+  #detail.lit{box-shadow:0 6px 14px rgba(0,0,0,.12), 0 0 0 2px var(--kpg)}
   .expl{display:none}
   .expl.open{display:block}
   #explegend{margin-top:34px}
@@ -104,7 +113,8 @@
 <div class="legend" id="legend"></div>
 <div class="hint">tap a pattern — the plan lights up where it lives, notes appear below</div>
 
-<div class="board">
+<div class="planrow">
+<div class="board planboard">
   <h2>Plan — from the Polycam scan · 6.34 × 3.41 m, nook end 2.97 m deep · west up</h2>
   <svg id="plan" viewBox="0 0 700 500" role="img" aria-label="Floor plan of the kitchen"></svg>
 </div>
@@ -112,6 +122,7 @@
 <div class="card" id="detail">
   <h3>Choose a pattern above</h3>
   <p style="font-size:.78rem;line-height:1.6">Every numbered pin on the plan is one of Alexander's patterns applied to a real spot in your kitchen — the swag pendant over the table, the open-shelf cabinet by the sink window, the window seat at the end of the bench. Tap through them.</p>
+</div>
 </div>
 
 <div class="legend" id="explegend"></div>
@@ -392,9 +403,11 @@ function select(id){
   });
   if(current){
     const p=patterns[current];
+    detail.classList.add("lit");
     detail.innerHTML="<h3>"+p.name+" <span class='pnum'>· pattern "+current+"</span></h3><ul>"+
       p.notes.map(n=>"<li>"+n+"</li>").join("")+"</ul>";
   } else {
+    detail.classList.remove("lit");
     detail.innerHTML="<h3>Choose a pattern above</h3><p style='font-size:.78rem;line-height:1.6'>Tap a number on the plan or a name in the list.</p>";
   }
 }
