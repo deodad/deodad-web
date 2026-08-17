@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Breakfast Kitchen — Working Model</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;600;700&family=Special+Elite&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/rough.js/2.1.1/rough.umd.js">
+</script>
+<style>
+  :root{
+    --paper:#e8dcc0; --paper-dark:#dccdaa; --ink:#3b332a; --ink-soft:#5a4f42;
+    --rule:#b8a578;
+    --propose:#5e6b4a;           /* sage pencil for proposals */
+    --kpg:#97a083;               /* Kittery Point Green approx */
+    --omist:#c3c8b4;             /* October Mist approx */
+    --marigold:#dfa94e; --saltillo:#c4713b; --oak:#5b4632;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:
+      radial-gradient(ellipse at 15% 8%, rgba(255,255,255,.10), transparent 60%),
+      radial-gradient(ellipse at 90% 95%, rgba(0,0,0,.10), transparent 55%),
+      var(--paper);
+    color:var(--ink); font-family:'Special Elite',monospace;
+    padding:24px 12px 70px;
+  }
+  .noise{position:fixed;inset:0;pointer-events:none;opacity:.05;mix-blend-mode:multiply;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");}
+  .wrap{max-width:1080px;margin:0 auto}
+  header{text-align:center;margin-bottom:22px}
+  h1{font-family:'Caveat',cursive;font-weight:700;font-size:clamp(2rem,5vw,3.2rem);margin:0}
+  .sub{font-size:.72rem;letter-spacing:1.6px;text-transform:uppercase;color:var(--ink-soft);
+    border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);
+    display:inline-block;padding:6px 16px;margin-top:8px}
+  .keys{display:flex;gap:18px;justify-content:center;flex-wrap:wrap;margin-top:12px;font-size:.7rem;color:var(--ink-soft)}
+  .keys span{display:inline-flex;align-items:center;gap:6px}
+  .swatch{width:26px;height:10px;border:1px solid var(--rule);display:inline-block}
+  .line-key{width:26px;height:0;border-top:2px solid var(--ink);display:inline-block}
+  .line-key.p{border-top:2px dashed var(--propose)}
+
+  .legend{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:18px 0 14px}
+  .chip{
+    font-family:'Special Elite',monospace;font-size:.72rem;color:var(--ink);
+    background:var(--paper-dark);border:1px solid var(--rule);
+    padding:7px 12px;cursor:pointer;box-shadow:0 2px 5px rgba(0,0,0,.12);
+    transition:transform .12s ease, background .12s ease;
+  }
+  .chip b{font-family:'Caveat',cursive;font-size:1rem;margin-right:5px}
+  .chip:hover{transform:translateY(-2px)}
+  .chip.active{background:var(--kpg);color:#fff;border-color:var(--ink-soft)}
+  .chip:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+
+  .board{
+    background:linear-gradient(180deg,rgba(255,255,255,.15),rgba(0,0,0,.03)),var(--paper-dark);
+    border:1px solid var(--rule);padding:14px;position:relative;
+    box-shadow:0 1px 0 rgba(255,255,255,.4) inset,0 8px 18px rgba(0,0,0,.14);
+    margin-bottom:22px;
+  }
+  .board::before{content:"";position:absolute;inset:7px;border:1px dashed rgba(59,51,42,.3);pointer-events:none}
+  .board h2{font-family:'Caveat',cursive;font-weight:600;font-size:1.5rem;margin:2px 6px 8px}
+  svg{width:100%;height:auto;display:block}
+
+  .zone{opacity:0;transition:opacity .25s ease;pointer-events:none}
+  .zone.show{opacity:1}
+  .badge{cursor:pointer}
+  .badge circle{transition:all .15s ease}
+  .badge:hover circle{stroke-width:3}
+  .badge.active circle{fill:var(--kpg)}
+  .badge.active text{fill:#fff}
+
+  .card{
+    background:linear-gradient(180deg,rgba(255,255,255,.2),rgba(0,0,0,.02)),var(--paper-dark);
+    border:1px solid var(--rule);padding:18px 20px;position:relative;
+    box-shadow:0 6px 14px rgba(0,0,0,.12);margin-bottom:26px;min-height:120px;
+  }
+  .card::before{content:"";position:absolute;inset:6px;border:1px dashed rgba(59,51,42,.3);pointer-events:none}
+  .card h3{font-family:'Caveat',cursive;font-weight:700;font-size:1.7rem;margin:0 0 2px}
+  .card .pnum{font-family:'Caveat',cursive;color:var(--ink-soft);font-size:1.1rem}
+  .card ul{margin:10px 0 0;padding-left:18px}
+  .card li{font-size:.78rem;line-height:1.55;margin-bottom:9px}
+  .card li::marker{content:"— "}
+  .hint{font-size:.72rem;color:var(--ink-soft);text-align:center;margin:4px 0 12px}
+  .expl{display:none}
+  .expl.open{display:block}
+  #explegend{margin-top:34px}
+  footer{max-width:980px;margin:26px auto 0;text-align:center;font-family:'Caveat',cursive;font-size:1.05rem;color:var(--ink-soft)}
+</style>
+</head>
+<body>
+<div class="noise"></div>
+<div class="wrap">
+<header>
+  <h1>The Breakfast Kitchen — Working Model</h1>
+  <div class="sub">measured from photographs · dimensions approximate · verify on site</div>
+  <div class="keys">
+    <span><i class="line-key"></i> existing</span>
+    <span><i class="line-key p"></i> proposed</span>
+  </div>
+</header>
+
+<div class="legend" id="legend"></div>
+<div class="hint">tap a pattern — the plan lights up where it lives, notes appear below</div>
+
+<div class="board">
+  <h2>Plan — from the Polycam scan · 6.34 × 3.41 m, nook end 2.97 m deep · west up</h2>
+  <svg id="plan" viewBox="0 0 700 500" role="img" aria-label="Floor plan of the kitchen"></svg>
+</div>
+
+<div class="card" id="detail">
+  <h3>Choose a pattern above</h3>
+  <p style="font-size:.78rem;line-height:1.6">Every numbered pin on the plan is one of Alexander's patterns applied to a real spot in your kitchen — the swag pendant over the table, the open-shelf cabinet by the sink window, the window seat at the end of the bench. Tap through them.</p>
+</div>
+
+<div class="legend" id="explegend"></div>
+<div class="hint">explorations — tap one and its drawing unfolds below; tap again to put it away</div>
+
+<div id="explpanels">
+<section class="expl" id="expl-work">
+<div class="board">
+  <h2>West wall — the working run (sink, shelves, afternoon counter)</h2>
+  <svg id="elevN" viewBox="0 0 760 340" role="img" aria-label="Elevation of the sink wall"></svg>
+</div>
+</section>
+
+<section class="expl" id="expl-nook">
+<div class="board">
+  <h2>West wall, nook end — window behind the banquette, swag pendant, corner lamp</h2>
+  <svg id="elevW" viewBox="0 0 760 360" role="img" aria-label="Elevation of the nook wall"></svg>
+</div>
+</section>
+
+<section class="expl" id="expl-step1">
+<div class="board">
+  <h2>The mini-hutch — one bay, fully dressed</h2>
+  <svg id="step1" viewBox="0 0 760 320" role="img" aria-label="Step one: single open bay finished as a hutch"></svg>
+</div>
+<div class="card">
+  <h3>The mini-hutch <span class="pnum">· weekend-to-two-days scope · complete in itself</span></h3>
+  <ul>
+    <li>Doors off the upper cabinet west of the sink window — hinge mortises filled, holes patched, face frame sanded and refinished so no hardware ghosts remain.</li>
+    <li>Shelf fronts thickened with a 1.5–2" wood face strip, glued and pinned — the single detail that makes exposed shelves read as deliberate.</li>
+    <li>Back of the bay paneled (beadboard) or limewashed; interior painted October Mist so the bay glows against the dark oak.</li>
+    <li>Soffit face above this bay wrapped in wood — the little roof that turns the bay into a hutch. Rest of the soffit painted Kittery Point Green.</li>
+    <li>Warm LED strip (2700K or lower, dimmable) surface-mounted to the soffit underside at its front edge — surface-mounted only, so it can remount onto wood if the dresser wall is ever built. Wire stubbed with generous slack.</li>
+    <li>Stock with weekly things only: everyday mugs, glasses, the jam jar, kid bowls.</li>
+    <li>Alongside: the room paint (walls October Mist, soffit band Kittery Point Green).</li>
+  </ul>
+</div>
+</section>
+
+<section class="expl" id="expl-step2">
+<div class="board">
+  <h2>The dresser wall — the whole run as one built-in</h2>
+  <svg id="step2" viewBox="0 0 760 320" role="img" aria-label="Step two: full soffit run wrapped in wood"></svg>
+</div>
+<div class="card">
+  <h3>The dresser wall <span class="pnum">· carpenter, 1–2 days · contains the mini-hutch</span></h3>
+  <ul>
+    <li>The whole west run becomes one tall piece of furniture — closed base, open middle, solid wood cap: a kitchen dresser the length of the wall.</li>
+    <li>Over the sink window: decide by the gap. 4–6"+ between window frame and soffit — clad it as a simple flush valance bridging the window. Tight gap — stop the wood at the cabinets and let the green paint carry the window stretch; the window's light outranks the wood's continuity.</li>
+    <li>Small crown at the ceiling line and a band molding at the cabinet-top joint — the two trim lines that sell the hutch illusion.</li>
+    <li>The LED strip mounts (or remounts) onto the new wood; an electrician formalizes the wiring while the carpenter is there. If clad over the window, the strip continues there as the sink's night task light.</li>
+    <li>Contains the mini-hutch whole: build the one bay first and let the wall grow outward from it, or go straight to the full run — nothing is done twice either way.</li>
+  </ul>
+</div>
+</section>
+</div>
+
+<footer>— drawn from seven photographs and a LiDAR scan · after C. Alexander, A Pattern Language —</footer>
+</div>
+
+<script>
+const INK="#3b332a", SOFT="#5a4f42", PRO="#5e6b4a";
+const KPG="#97a083", OMIST="#c3c8b4", MARI="#dfa94e", SALT="#c4713b", OAK="#5b4632";
+
+function dashify(node, d="6,5"){
+  node.querySelectorAll("path").forEach(p=>p.setAttribute("stroke-dasharray",d));
+  return node;
+}
+function label(svg,x,y,txt,opts={}){
+  const t=document.createElementNS("http://www.w3.org/2000/svg","text");
+  t.setAttribute("x",x);t.setAttribute("y",y);
+  t.setAttribute("font-family",opts.hand?"Caveat, cursive":"Special Elite, monospace");
+  t.setAttribute("font-size",opts.size||(opts.hand?17:10));
+  t.setAttribute("fill",opts.color||SOFT);
+  if(opts.anchor)t.setAttribute("text-anchor",opts.anchor);
+  if(opts.weight)t.setAttribute("font-weight",opts.weight);
+  t.textContent=txt; svg.appendChild(t); return t;
+}
+
+/* ============ PLAN ============ */
+const plan=document.getElementById("plan");
+const rc=rough.svg(plan);
+const R={roughness:1.4,stroke:INK,strokeWidth:1.6,fill:"none"};
+
+/* room shell from Polycam scan — 6.34 × 3.41 m outer, dining end shallower (2.97 m), jog on the east wall.
+   92 px/m · west up, south left · inner faces: (60,60)-(625,355) kitchen, dining east at y=316 */
+plan.appendChild(rc.polygon([[60,60],[625,60],[625,355],[342,355],[342,316],[240,316],[60,316]],{...R,strokeWidth:2.4}));
+/* jog return + hall opening between jog (x=240) and pantry cheek (x=342) */
+plan.appendChild(rc.line(240,316,240,355,{...R,strokeWidth:2.4}));
+plan.appendChild(rc.line(240,355,342,355,{roughness:1.2,stroke:"#e8dcc0",strokeWidth:7}));
+plan.appendChild(rc.path("M342 355 A 102 102 0 0 1 240 253",{roughness:1.6,stroke:SOFT,strokeWidth:1,fill:"none"}));
+label(plan,258,376,"to hall");
+
+/* windows on the west wall — scanned: nook 1.41 m, sink 1.44 m */
+plan.appendChild(rc.line(126,60,256,60,{roughness:1,stroke:INK,strokeWidth:6}));
+label(plan,166,48,"window");
+plan.appendChild(rc.line(423,60,556,60,{roughness:1,stroke:INK,strokeWidth:6}));
+label(plan,466,48,"window");
+
+/* counters — west run, corner block, north run (scanned depths) */
+plan.appendChild(rc.rectangle(333,60,229,63,{...R,fill:"#00000010",fillStyle:"hachure",hachureAngle:25,hachureGap:7}));
+plan.appendChild(rc.rectangle(562,60,63,117,{...R,fill:"#00000010",fillStyle:"hachure",hachureAngle:25,hachureGap:7}));
+plan.appendChild(rc.rectangle(569,177,56,178,{...R,fill:"#00000010",fillStyle:"hachure",hachureAngle:25,hachureGap:7}));
+/* east-wall counter stub, NE corner to the fridge (scanned 1.32 m run) — forms an L with the north run */
+plan.appendChild(rc.rectangle(503,300,122,55,{...R,fill:"#00000010",fillStyle:"hachure",hachureAngle:25,hachureGap:7}));
+/* range + microwave over, north wall */
+plan.appendChild(rc.rectangle(569,178,56,66,R));
+label(plan,576,214,"range");
+dashify(plan.appendChild(rc.rectangle(575,182,44,28,{roughness:1.2,stroke:SOFT,strokeWidth:1,fill:"none"})),"3,3");
+/* fridge against east wall, north of pantry (scanned) */
+plan.appendChild(rc.rectangle(416,274,85,81,R));
+label(plan,436,320,"fridge");
+/* pantry closet recessed into the room, scanned 0.79 × 0.65 m */
+plan.appendChild(rc.rectangle(342,296,72,59,{...R,strokeWidth:1.2,fill:"#00000008",fillStyle:"hachure",hachureAngle:60,hachureGap:6}));
+label(plan,352,330,"pantry");
+/* sink + DW on the west run */
+plan.appendChild(rc.rectangle(450,68,53,44,R));
+label(plan,458,134,"sink");
+plan.appendChild(rc.rectangle(390,64,55,57,R));
+label(plan,400,102,"DW");
+/* uppers, dashed — hutch bay south of the sink window + corner run */
+dashify(plan.appendChild(rc.rectangle(339,60,86,44,{roughness:1.2,stroke:SOFT,strokeWidth:1.1,fill:"none"})),"4,4");
+label(plan,344,116,"uppers");
+dashify(plan.appendChild(rc.rectangle(590,177,35,178,{roughness:1.2,stroke:SOFT,strokeWidth:1.1,fill:"none"})),"4,4");
+
+/* banquette: one continuous L hugging the SW corner (photo-verified; not in scan) */
+plan.appendChild(rc.polygon([[60,60],[286,60],[286,110],[106,110],[106,218],[60,218]],{...R,fill:"#00000008",fillStyle:"hachure",hachureAngle:60,hachureGap:8}));
+label(plan,140,88,"banquette");
+/* table — scanned position and true size: snug to the bench */
+plan.appendChild(rc.ellipse(173,176,114,99,{...R,strokeWidth:1.8}));
+label(plan,152,182,"table",{hand:true,size:19});
+/* anchor chair — heavier, backed, presiding at the table's north end (251 Different Chairs) */
+plan.appendChild(rc.rectangle(234,152,46,48,{...R,strokeWidth:1.8}));
+plan.appendChild(rc.line(284,150,284,202,{roughness:1.4,stroke:INK,strokeWidth:5}));
+plan.appendChild(rc.line(238,148,282,148,{roughness:1.4,stroke:INK,strokeWidth:2.2}));
+plan.appendChild(rc.line(238,204,282,204,{roughness:1.4,stroke:INK,strokeWidth:2.2}));
+label(plan,236,224,"anchor chair");
+
+plan.appendChild(rc.rectangle(148,238,56,54,R)); label(plan,136,310,"high chair");
+/* proposed mirror on SOUTH nook wall above the bench's short leg */
+dashify(plan.appendChild(rc.line(60,126,60,212,{roughness:1.5,stroke:PRO,strokeWidth:4,fill:"none"})),"6,5");
+label(plan,70,170,"mirror",{color:PRO});
+dashify(plan.appendChild(rc.circle(86,292,38,{roughness:1.5,stroke:PRO,strokeWidth:1.8,fill:PRO+"22",fillStyle:"solid"})));
+label(plan,110,300,"corner lamp",{color:PRO});
+/* proposed linen pinboard, south wall — gap after bench, runs to the lamp's edge */
+dashify(plan.appendChild(rc.line(60,230,60,262,{roughness:1.5,stroke:PRO,strokeWidth:4,fill:"none"})),"5,4");
+label(plan,70,250,"pinboard",{color:PRO});
+/* mirror tick between the windows, west wall */
+plan.appendChild(rc.line(300,60,336,60,{roughness:1,stroke:SOFT,strokeWidth:4}));
+label(plan,288,50,"mirror");
+/* learning tower parked at counter end (scan: chair_other) */
+plan.appendChild(rc.rectangle(317,62,44,50,R));
+label(plan,296,126,"tower");
+/* pendant hook over the scanned table center */
+plan.appendChild(rc.circle(176,164,12,{roughness:1.5,stroke:PRO,strokeWidth:1.8,fill:PRO,fillStyle:"solid"}));
+label(plan,192,158,"pendant hook",{color:PRO});
+/* proposal notes */
+dashify(plan.appendChild(rc.rectangle(136,66,114,40,{roughness:1.5,stroke:PRO,strokeWidth:1.4,fill:"none"})),"3,3");
+label(plan,142,124,"seat cushion",{color:PRO});
+
+/* compass — west is up */
+(function(){
+  const cx=70, cy=440, r=26;
+  plan.appendChild(rc.circle(cx,cy,r*2,{roughness:1.6,stroke:SOFT,strokeWidth:1.2,fill:"none"}));
+  plan.appendChild(rc.line(cx,cy+r,cx,cy-r,{roughness:1.4,stroke:INK,strokeWidth:1.6}));
+  plan.appendChild(rc.line(cx,cy-r,cx-5,cy-r+9,{roughness:1.4,stroke:INK,strokeWidth:1.4}));
+  plan.appendChild(rc.line(cx,cy-r,cx+5,cy-r+9,{roughness:1.4,stroke:INK,strokeWidth:1.4}));
+  plan.appendChild(rc.line(cx-r,cy,cx+r,cy,{roughness:1.4,stroke:SOFT,strokeWidth:1}));
+  label(plan,cx-4,cy-r-6,"W",{hand:true,size:16,weight:700,color:INK});
+  label(plan,cx-4,cy+r+16,"E",{hand:true,size:13});
+  label(plan,cx+r+5,cy+4,"N",{hand:true,size:13});
+  label(plan,cx-r-14,cy+4,"S",{hand:true,size:13});
+})();
+/* ---- pattern zones + badges ---- */
+const zones={};
+function zone(id, draw){
+  const g=document.createElementNS("http://www.w3.org/2000/svg","g");
+  g.setAttribute("class","zone"); g.id="z"+id;
+  draw(g); plan.appendChild(g); zones[id]=g;
+}
+function zrect(g,x,y,w,h){
+  const r=rc.rectangle(x,y,w,h,{roughness:2,stroke:KPG,strokeWidth:3.5,fill:KPG+"33",fillStyle:"solid"});
+  g.appendChild(r);
+}
+zone(139,g=>{zrect(g,64,64,172,248); zrect(g,240,64,381,287);});
+zone(159,g=>{zrect(g,120,44,142,40); zrect(g,417,44,145,40); zrect(g,44,124,36,114);});
+zone(182,g=>zrect(g,106,116,150,130));
+zone(251,g=>{zrect(g,64,64,222,46); zrect(g,64,110,42,104); zrect(g,228,146,62,62); zrect(g,142,232,68,66);});
+zone(179,g=>zrect(g,64,64,222,248));
+zone(199,g=>zrect(g,417,60,145,68));
+zone(200,g=>zrect(g,335,56,94,52));
+zone(180,g=>zrect(g,116,44,150,74));
+zone(253,g=>{zrect(g,44,224,40,44); zrect(g,410,270,95,89);});
+zone(184,g=>{zrect(g,444,62,66,56); zrect(g,563,172,68,78); zrect(g,410,268,97,93);});
+zone(250,g=>{zrect(g,64,64,557,248); zrect(g,240,64,381,287);});
+
+const badgePos={139:[470,200],159:[86,180],182:[226,236],251:[262,120],179:[92,116],199:[534,112],200:[382,80],180:[170,108],253:[118,258],184:[560,146],250:[302,208]};
+const badges={};
+Object.entries(badgePos).forEach(([id,[x,y]])=>{
+  const g=document.createElementNS("http://www.w3.org/2000/svg","g");
+  g.setAttribute("class","badge"); g.setAttribute("tabindex","0"); g.setAttribute("role","button");
+  const c=document.createElementNS("http://www.w3.org/2000/svg","circle");
+  c.setAttribute("cx",x);c.setAttribute("cy",y);c.setAttribute("r",15);
+  c.setAttribute("fill","#e8dcc0");c.setAttribute("stroke",INK);c.setAttribute("stroke-width",1.8);
+  const t=document.createElementNS("http://www.w3.org/2000/svg","text");
+  t.setAttribute("x",x);t.setAttribute("y",y+4);t.setAttribute("text-anchor","middle");
+  t.setAttribute("font-family","Caveat, cursive");t.setAttribute("font-size",15);t.setAttribute("font-weight",700);
+  t.setAttribute("fill",INK);t.textContent=id;
+  g.appendChild(c);g.appendChild(t);
+  g.addEventListener("click",()=>select(id));
+  g.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();select(id);}});
+  plan.appendChild(g); badges[id]=g;
+});
+
+/* ============ CONTENT ============ */
+const patterns={
+ 139:{name:"Farmhouse Kitchen",notes:[
+  "The kitchen is bigger than a workroom: the table is in it, and the cooking and the eating are one continuous act. Keep the path from dishwasher to table open — 42 to 48 inches, always clear.",
+  "The learning tower stands at the counter because a child who can reach the counter is part of the work. It is furniture of the kitchen, not equipment to put away.",
+  "In the drawer nearest the table, keep the things the table needs — napkins, placemats, crayons — low enough that small hands can set the table without asking. The trash bin becomes a pull-out in the sink run."]},
+ 159:{name:"Light on Two Sides",notes:[
+  "Rooms lit from one side put every face half in shadow, and people drift away from them without knowing why. Both windows here share the west wall, so the true pattern cannot be built.",
+  "But a large mirror on the south wall receives the low western light and returns it across the table — a second side, borrowed. In the evening, when the family is at the table, it is real.",
+  "Keep both windows entirely clear of furniture and clutter. What light the room has, let it have completely."]},
+ 182:{name:"Eating Atmosphere",notes:[
+  "A table needs its own light, hanging low, so that the table becomes a place — a pool of light with darkness around it, and the family inside the pool.",
+  "The Tiffany shade is right for this: stained glass asks for a warm, dim bulb, and gives back colored light onto the wood. Hang it from a hook in the joist over the table's center, chained back to the fan box; the glass should hang 30 to 32 inches above the top. 2200–2700K, on a dimmer.",
+  "The dark soffit above and the pale walls make the lit table the warmest place in the room, which is where the warmth belongs."]},
+ 251:{name:"Different Chairs",notes:[
+  "People are different, and the chairs in a room should be as different as the people — a room where every seat is the same seats no one comfortably.",
+  "At the table's head, one heavier chair with arms and a back — a carver, a ladder-back, a small upholstered chair. Someone presides in it, and its back closes the alcove's open side. It should not match the mid-century chair already at the table; the difference is the point.",
+  "The bench is for the ones who linger. The high chair rolls to the east side at mealtimes and leaves again. If the table ever wants one more seat, a low stool that slides under the top."]},
+ 179:{name:"Alcoves",notes:[
+  "A family in one big room needs small places at its edge — a place partly enclosed, where two people can be together, still connected to the room but held.",
+  "The nook's enclosure is made of its edges: wood trim around the window, crown molding above, the anchor chair standing at its open side. Nothing more is needed.",
+  "The pendant is the alcove's own light. Keep the side toward the hall open — an alcove only works if, from inside it, you can still see the life of the big room."]},
+ 199:{name:"Sunny Counter",notes:[
+  "A kitchen whose counter gets sun is a kitchen people want to work in. This one faces west: the sun comes in the afternoon, on the run beside the sink.",
+  "Keep that stretch of counter permanently clear, so the sun lands on wood and tile and not on clutter. At the sink, a dark solar shade replaces the woven blind for the few hot weeks of low summer sun — it tames the glare and keeps the view.",
+  "The mornings on this side are dim. Under-cabinet lights do the morning's work."]},
+ 200:{name:"Open Shelves",notes:[
+  "Cupboards hide things twice: from sight and from use. Shelves that hold the daily things in the open, at eye level, make the kitchen legible — you see your life on the wall.",
+  "The flower-knob cabinet beside the sink window becomes this: doors off, hinge mortises filled, the inside painted pale. On it, only the things used weekly — mugs, glasses, the kid bowls. Daily use is what keeps open shelves clean.",
+  "Against the marigold tile and the dark oak, one lit open bay loosens the whole wall."]},
+ 253:{name:"Things From Your Life",notes:[
+  "The only ornament that ever satisfies is the ornament that comes out of your own life — the drawings, the photographs, the things brought back. Decoration bought to decorate stays foreign forever.",
+  "The fridge door shows the family already knows this. Give the collection a real home: a linen pinboard on the south wall, hung low, its bottom near 30 inches, so the boy can pin his own work.",
+  "Let the fridge keep three things. The rest moves and rotates — the sill ledge, the open bay, the board. Fix the board to a stud or a cleat; it will be pulled on."]},
+ 184:{name:"Cooking Layout",notes:[
+  "Cooking is a chain of small journeys between sink, stove, and fridge. If the journeys are too long the cook is tired; if anything crosses them the cook is interrupted.",
+  "Here the triangle measures 5'-11\", 6'-1\", 8'-0\" — twenty feet around, and no path crosses it. The counter beside the fridge receives what the fridge gives out.",
+  "This costs nothing to build; it is already true. It costs only attention to keep — nothing parked on the triangle's floor."]},
+ 250:{name:"Warm Colors",notes:[
+  "The color of light matters more than the color of walls: what counts is the warmth of the light after it has bounced — off the floor, off the tile, off the wood — and arrives at a person's face.",
+  "Here the light already passes over Saltillo, marigold, and oak; the greens, when they go up, join that chain. They are warm greens, olive and gray-green — they will hold the terracotta instead of fighting it.",
+  "Choose lamps and bulbs so that the light stays warm at night — 2200 to 2700K throughout."]},
+ 180:{name:"Window Place",notes:[
+  "Everyone loves a place at a window, where sitting and looking out are one act. A room without one keeps people vaguely restless — they want to be near the light and comfortable, and can only choose one.",
+  "The bench under the window is this place; it gets the room's last, lowest light. The leather is already soft — what the place needs is to be marked: a bolster at the window corner, so a person can sit sideways, back against it, and look out.",
+  "Deepen the repaired sill into a ledge, five or six inches, for plants and a cup and whatever is currently treasured. After sunset the corner lamp keeps the place alive."]}
+};
+
+const legend=document.getElementById("legend");
+const detail=document.getElementById("detail");
+let current=null;
+Object.entries(patterns).forEach(([id,p])=>{
+  const b=document.createElement("button");
+  b.className="chip"; b.innerHTML="<b>"+id+"</b>"+p.name;
+  b.addEventListener("click",()=>select(id));
+  b.id="chip"+id; legend.appendChild(b);
+});
+function select(id){
+  current=(current===id)?null:id;
+  Object.keys(patterns).forEach(k=>{
+    zones[k].classList.toggle("show",k===current);
+    badges[k].classList.toggle("active",k===current);
+    document.getElementById("chip"+k).classList.toggle("active",k===current);
+  });
+  if(current){
+    const p=patterns[current];
+    detail.innerHTML="<h3>"+p.name+" <span class='pnum'>· pattern "+current+"</span></h3><ul>"+
+      p.notes.map(n=>"<li>"+n+"</li>").join("")+"</ul>";
+  } else {
+    detail.innerHTML="<h3>Choose a pattern above</h3><p style='font-size:.78rem;line-height:1.6'>Tap a number on the plan or a name in the list.</p>";
+  }
+}
+
+/* ============ WEST WALL — WORKING RUN (scan-true: 106 px/m vertical, 174.6 px/m horizontal) ============ */
+const eN=document.getElementById("elevN");
+const rn=rough.svg(eN);
+/* datums: floor 300, ceiling 39 (2.46 m) · counter 199 (0.95) · uppers 72–159 · windows 82–189 */
+eN.appendChild(rn.line(30,300,730,300,{roughness:1.3,stroke:INK,strokeWidth:2.4}));
+eN.appendChild(rn.line(30,39,730,39,{roughness:1.2,stroke:INK,strokeWidth:1.6}));
+/* soffit band — KPG, full run */
+eN.appendChild(rn.rectangle(30,39,700,33,{roughness:1.2,stroke:INK,strokeWidth:1.2,fill:KPG,fillStyle:"solid"}));
+label(eN,40,62,"soffit — Kittery Point Green",{color:"#fff",size:10});
+/* wall — October Mist */
+eN.appendChild(rn.rectangle(30,72,700,127,{roughness:1,stroke:SOFT,strokeWidth:.6,fill:OMIST+"88",fillStyle:"solid"}));
+label(eN,44,92,"walls — October Mist",{size:10});
+/* mirror sliver at far left (between the windows) */
+eN.appendChild(rn.rectangle(64,96,64,86,{roughness:1.4,stroke:INK,strokeWidth:1.6,fill:"#fdf6e355",fillStyle:"solid"}));
+label(eN,58,196,"mirror",{size:9.5});
+/* hutch bay — scanned 0.94 m wide, directly beside the window */
+eN.appendChild(rn.rectangle(187,72,164,87,{roughness:1.3,stroke:INK,strokeWidth:1.7,fill:OAK+"cc",fillStyle:"solid"}));
+eN.appendChild(rn.rectangle(197,80,144,71,{roughness:1.2,stroke:"#e8dcc0",strokeWidth:1.2,fill:OMIST,fillStyle:"solid"}));
+[104,128].forEach(y=>eN.appendChild(rn.line(197,y,341,y,{roughness:1.3,stroke:INK,strokeWidth:1.3})));
+[[210,96],[236,94],[266,96],[300,94],[214,122],[248,120],[284,122],[318,120]].forEach(([x,y],i)=>{
+  if(i%2)eN.appendChild(rn.circle(x,y+2,9,{roughness:1.5,stroke:INK,strokeWidth:.9,fill:"none"}));
+  else eN.appendChild(rn.rectangle(x-4,y-6,9,13,{roughness:1.5,stroke:INK,strokeWidth:.9,fill:"none"}));
+});
+label(eN,150,214,"doors off — weekly things only",{color:PRO,size:9.5});
+/* sink window — scanned 1.44 m, meets the bay */
+eN.appendChild(rn.rectangle(348,82,251,107,{roughness:1.3,stroke:INK,strokeWidth:1.8,fill:"#fdf6e3",fillStyle:"solid"}));
+eN.appendChild(rn.line(473,82,473,189,{roughness:1.2,stroke:INK,strokeWidth:1}));
+label(eN,428,78,"keep glass clear",{color:PRO,size:9.5});
+/* north upper — scanned 0.66 m at the corner */
+eN.appendChild(rn.rectangle(615,72,115,87,{roughness:1.3,stroke:INK,strokeWidth:1.6,fill:OAK+"cc",fillStyle:"solid"}));
+/* backsplash — marigold, counter to uppers */
+eN.appendChild(rn.rectangle(30,159,700,40,{roughness:1,stroke:SOFT,strokeWidth:.8,fill:MARI,fillStyle:"solid"}));
+for(let x=48;x<720;x+=52){
+  eN.appendChild(rn.path(`M${x} 195 L${x} 178 Q${x} 168 ${x+12} 168 Q${x+24} 168 ${x+24} 178 L${x+24} 195`,{roughness:.9,stroke:INK,strokeWidth:.8,fill:"none"}));
+}
+/* counter + base — run starts at scan x=0.10 (px 177), corner block continues right */
+eN.appendChild(rn.rectangle(177,199,553,10,{roughness:1.1,stroke:INK,strokeWidth:1.4,fill:"#efe8d2",fillStyle:"solid"}));
+eN.appendChild(rn.rectangle(177,209,553,91,{roughness:1.2,stroke:INK,strokeWidth:1.4,fill:OAK+"bb",fillStyle:"solid"}));
+/* DW at scanned position */
+eN.appendChild(rn.rectangle(285,209,105,91,{roughness:1.2,stroke:INK,strokeWidth:1.2,fill:"#9a958c",fillStyle:"solid"}));
+label(eN,322,262,"DW",{color:"#fff"});
+/* sink + faucet, centered under the window */
+eN.appendChild(rn.line(398,199,500,199,{roughness:1,stroke:INK,strokeWidth:3.5}));
+eN.appendChild(rn.path("M446 199 L446 172 Q446 158 462 160 Q472 162 470 174",{roughness:1.3,stroke:INK,strokeWidth:1.6,fill:"none"}));
+/* learning tower parked at the run's end, nook side */
+eN.appendChild(rn.rectangle(120,232,58,68,{roughness:1.5,stroke:INK,strokeWidth:1.6,fill:"none"}));
+eN.appendChild(rn.line(128,258,172,258,{roughness:1.4,stroke:INK,strokeWidth:1.2}));
+label(eN,108,316,"tower",{size:9.5});
+/* under-cabinet task light */
+dashify(eN.appendChild(rn.line(190,162,348,162,{roughness:1,stroke:MARI,strokeWidth:2.4,fill:"none"})),"7,5");
+dashify(eN.appendChild(rn.line(618,162,728,162,{roughness:1,stroke:MARI,strokeWidth:2.4,fill:"none"})),"7,5");
+label(eN,614,178,"under-cab light",{color:PRO,size:9});
+label(eN,30,326,"scan-true: counter 37\" · sills 41\" · window heads 81\" · ceiling 8'-1\"",{size:9});
+
+/* ============ WEST WALL — NOOK END (scan-true: 284.5 px/m horizontal) ============ */
+const eW=document.getElementById("elevW");
+const rw=rough.svg(eW);
+/* datums: floor 320, ceiling 59 · window 104–215 · bench seat 272 */
+eW.appendChild(rw.line(30,320,730,320,{roughness:1.3,stroke:INK,strokeWidth:2.4}));
+eW.appendChild(rw.line(30,59,730,59,{roughness:1.2,stroke:INK,strokeWidth:1.6}));
+/* wall October Mist */
+eW.appendChild(rw.rectangle(30,59,700,261,{roughness:1,stroke:SOFT,strokeWidth:.6,fill:OMIST+"88",fillStyle:"solid"}));
+/* crown molding — the alcove's roof line (proposal) */
+dashify(eW.appendChild(rw.line(30,68,730,68,{roughness:1.3,stroke:PRO,strokeWidth:3,fill:"none"})),"7,5");
+label(eW,440,88,"crown molding — the alcove's roof line",{color:PRO,size:10});
+/* nook window — scanned 1.41 m wide, sill 39", head 80" */
+dashify(eW.appendChild(rw.rectangle(222,92,426,135,{roughness:1.4,stroke:PRO,strokeWidth:2.6,fill:"none"})),"6,5");
+label(eW,40,246,"wood window trim",{color:PRO,size:10});
+eW.appendChild(rw.rectangle(235,104,401,111,{roughness:1.3,stroke:INK,strokeWidth:1.8,fill:"#fdf6e3",fillStyle:"solid"}));
+eW.appendChild(rw.line(435,104,435,215,{roughness:1.2,stroke:INK,strokeWidth:1}));
+/* linen roller, mounted high */
+eW.appendChild(rw.rectangle(228,92,414,12,{roughness:1.2,stroke:INK,strokeWidth:1.2,fill:"#efe8d2",fillStyle:"solid"}));
+label(eW,560,86,"woven shade, mounted high",{size:9.5});
+/* deepened sill ledge with plants + cup */
+eW.appendChild(rw.rectangle(226,215,420,10,{roughness:1.2,stroke:INK,strokeWidth:1.6,fill:"#efe8d2",fillStyle:"solid"}));
+eW.appendChild(rw.circle(268,205,16,{roughness:1.6,stroke:INK,strokeWidth:1.2,fill:"none"}));
+eW.appendChild(rw.path("M262 197 Q268 183 274 197",{roughness:1.6,stroke:PRO,strokeWidth:1.4,fill:"none"}));
+eW.appendChild(rw.rectangle(590,201,16,14,{roughness:1.5,stroke:INK,strokeWidth:1.1,fill:"none"}));
+label(eW,652,222,"5–6\" ledge",{color:PRO,size:9.5});
+/* banquette under the window — long leg fills the wall */
+eW.appendChild(rw.rectangle(56,240,660,80,{roughness:1.3,stroke:INK,strokeWidth:1.6,fill:"#c9a86a55",fillStyle:"solid"}));
+eW.appendChild(rw.line(56,272,716,272,{roughness:1.2,stroke:INK,strokeWidth:1}));
+/* window-seat cushion at the sunny end */
+dashify(eW.appendChild(rw.rectangle(240,258,150,16,{roughness:1.4,stroke:PRO,strokeWidth:1.8,fill:"none"})),"4,4");
+label(eW,240,254,"seat cushion + bolster",{color:PRO,size:9.5});
+/* table in front — scanned: ellipse 1.24 m, top at 30", centered near the bench's sunny end */
+eW.appendChild(rw.line(266,320,266,286,{roughness:1.3,stroke:INK,strokeWidth:2}));
+eW.appendChild(rw.line(494,320,494,286,{roughness:1.3,stroke:INK,strokeWidth:2}));
+eW.appendChild(rw.ellipse(380,283,352,16,{roughness:1.4,stroke:INK,strokeWidth:1.8,fill:"#c9a86a66",fillStyle:"solid"}));
+label(eW,356,314,"table",{hand:true,size:17});
+/* fan box + short swag to the hook over the scanned table center */
+eW.appendChild(rw.circle(470,59,14,{roughness:1.4,stroke:SOFT,strokeWidth:1.2,fill:"none"}));
+label(eW,486,52,"fan box",{size:9});
+dashify(eW.appendChild(rw.path("M470 66 Q425 92 382 72",{roughness:1.4,stroke:PRO,strokeWidth:2,fill:"none"})),"6,5");
+eW.appendChild(rw.circle(380,70,8,{roughness:1.3,stroke:PRO,strokeWidth:1.6,fill:PRO,fillStyle:"solid"}));
+eW.appendChild(rw.line(380,74,380,150,{roughness:1.3,stroke:PRO,strokeWidth:1.6}));
+/* pendant: Tiffany dome, bottom 30–32" above the top */
+eW.appendChild(rw.path("M340 186 Q340 150 380 150 Q420 150 420 186 Z",{roughness:1.5,stroke:PRO,strokeWidth:1.8,fill:MARI+"55",fillStyle:"solid"}));
+eW.appendChild(rw.line(346,178,414,178,{roughness:1.2,stroke:PRO,strokeWidth:1}));
+dashify(eW.appendChild(rw.path("M348 190 L316 268 M412 190 L444 268",{roughness:1.2,stroke:MARI,strokeWidth:1.4,fill:"none"})),"3,4");
+label(eW,470,152,"hook in joist over table center",{color:PRO,size:9.5});
+label(eW,470,168,"Tiffany glass, 30–32\" above top",{color:PRO,size:9.5});
+label(eW,470,184,"2200–2700K on dimmer",{color:PRO,size:9.5});
+/* corner lamp — stands in the south corner, this end of the room */
+dashify(eW.appendChild(rw.line(70,320,70,190,{roughness:1.4,stroke:PRO,strokeWidth:2,fill:"none"})),"5,4");
+eW.appendChild(rw.path("M48 190 L92 190 L84 152 L56 152 Z",{roughness:1.5,stroke:PRO,strokeWidth:1.8,fill:MARI+"44",fillStyle:"solid"}));
+dashify(eW.appendChild(rw.path("M52 196 L34 250 M88 196 L106 250",{roughness:1.2,stroke:MARI,strokeWidth:1.2,fill:"none"})),"3,4");
+label(eW,34,142,"corner lamp",{color:PRO,size:9.5});
+label(eW,30,346,"swag from the existing fan box · fan light general duty · lamp and pendant are the evening pools",{size:9});
+
+/* ============ THE MINI-HUTCH (scan-true bay: 0.94 m wide, wall side / window side) ============ */
+const s1=document.getElementById("step1");
+const r1=rough.svg(s1);
+/* crop: counter 310 up to ceiling 30 (185 px/m) · bay 145–615 */
+s1.appendChild(r1.line(30,30,730,30,{roughness:1.2,stroke:INK,strokeWidth:1.6}));
+s1.appendChild(r1.line(30,310,730,310,{roughness:1.3,stroke:INK,strokeWidth:2.2}));
+/* left of the bay: open wall (the mirror stretch), painted */
+s1.appendChild(r1.rectangle(30,30,115,280,{roughness:1,stroke:SOFT,strokeWidth:.6,fill:OMIST+"88",fillStyle:"solid"}));
+s1.appendChild(r1.rectangle(30,30,115,28,{roughness:1.1,stroke:SOFT,strokeWidth:.8,fill:KPG,fillStyle:"solid"}));
+label(s1,36,78,"wall",{size:9});
+/* right of the bay: the sink window begins immediately */
+s1.appendChild(r1.rectangle(615,64,115,182,{roughness:1.2,stroke:INK,strokeWidth:1.6,fill:"#fdf6e3",fillStyle:"solid"}));
+label(s1,634,268,"window",{size:9.5});
+/* wood-wrapped soffit over the bay — its roof */
+s1.appendChild(r1.rectangle(145,30,470,58,{roughness:1.3,stroke:INK,strokeWidth:1.6,fill:OAK+"dd",fillStyle:"solid"}));
+[44,58,72].forEach(y=>s1.appendChild(r1.line(150,y,610,y,{roughness:1.1,stroke:"#e8dcc0",strokeWidth:.7})));
+label(s1,152,26,"soffit face wrapped in wood — the hutch's roof",{color:PRO,size:9.5});
+/* LED strip under the soffit front edge */
+dashify(s1.appendChild(r1.line(152,92,608,92,{roughness:1,stroke:MARI,strokeWidth:3,fill:"none"})),"7,5");
+label(s1,620,96,"LED strip,",{color:PRO,size:9.5});
+label(s1,620,110,"surface-mounted",{color:PRO,size:9.5});
+label(s1,620,124,"2700K · dimmable",{color:PRO,size:9.5});
+/* the open bay: frame, beadboard back, thick shelves, wares — scanned 0.94 × 0.82 m */
+s1.appendChild(r1.rectangle(145,88,470,152,{roughness:1.3,stroke:INK,strokeWidth:1.8,fill:"none"}));
+s1.appendChild(r1.rectangle(160,96,440,136,{roughness:1.1,stroke:SOFT,strokeWidth:.8,fill:OMIST,fillStyle:"solid"}));
+for(let x=180;x<596;x+=24)s1.appendChild(r1.line(x,98,x,230,{roughness:.9,stroke:SOFT,strokeWidth:.5}));
+label(s1,160,258,"beadboard back, painted October Mist",{color:PRO,size:9.5});
+/* thick-edged shelves */
+[140,188].forEach(y=>{
+  s1.appendChild(r1.rectangle(160,y,440,11,{roughness:1.2,stroke:INK,strokeWidth:1.3,fill:OAK+"dd",fillStyle:"solid"}));
+});
+label(s1,620,146,"shelf fronts",{color:PRO,size:9.5});
+label(s1,620,160,"thickened 1.5–2\"",{color:PRO,size:9.5});
+/* mugs and jars */
+[[192,124],[232,120],[278,124],[330,118],[382,124],[436,120],[200,174],[252,170],[308,174],[364,168],[420,174],[470,170]].forEach(([x,y],i)=>{
+  if(i%2)s1.appendChild(r1.circle(x,y+2,13,{roughness:1.5,stroke:INK,strokeWidth:1,fill:"none"}));
+  else s1.appendChild(r1.rectangle(x-6,y-10,13,20,{roughness:1.5,stroke:INK,strokeWidth:1,fill:"none"}));
+});
+/* marigold splash below, down to the counter */
+s1.appendChild(r1.rectangle(145,240,470,60,{roughness:1,stroke:SOFT,strokeWidth:.8,fill:MARI,fillStyle:"solid"}));
+for(let x=162;x<600;x+=52){
+  s1.appendChild(r1.path(`M${x} 296 L${x} 274 Q${x} 262 ${x+13} 262 Q${x+26} 262 ${x+26} 274 L${x+26} 296`,{roughness:.9,stroke:INK,strokeWidth:.8,fill:"none"}));
+}
+/* hinge callout */
+dashify(s1.appendChild(r1.circle(147,130,14,{roughness:1.4,stroke:PRO,strokeWidth:1.4,fill:"none"})),"3,3");
+label(s1,36,296,"hinge mortises filled — no hardware ghosts",{color:PRO,size:9.5});
+label(s1,30,330,"one bay between wall and window — complete in itself",{size:9});
+
+/* ============ THE DRESSER WALL (scan-true full run: 214 px/m) ============ */
+const s2=document.getElementById("step2");
+const r2=rough.svg(s2);
+/* datums: floor 300, ceiling 39, counter 199, uppers 72–159 · bay 64–265, window 261–569, north upper 588–730 */
+s2.appendChild(r2.line(30,39,730,39,{roughness:1.2,stroke:INK,strokeWidth:1.6}));
+s2.appendChild(r2.line(30,300,730,300,{roughness:1.3,stroke:INK,strokeWidth:2.2}));
+/* full wood soffit run — the dresser's cap */
+s2.appendChild(r2.rectangle(30,39,700,33,{roughness:1.3,stroke:INK,strokeWidth:1.6,fill:OAK+"dd",fillStyle:"solid"}));
+[48,58,68].forEach(y=>s2.appendChild(r2.line(34,y,726,y,{roughness:1,stroke:"#e8dcc0",strokeWidth:.6})));
+/* crown at ceiling + band at cabinet joint */
+s2.appendChild(r2.line(30,43,730,43,{roughness:1,stroke:"#e8dcc0",strokeWidth:1.6}));
+label(s2,36,32,"small crown at ceiling",{color:PRO,size:9});
+s2.appendChild(r2.line(30,72,730,72,{roughness:1,stroke:INK,strokeWidth:2.2}));
+label(s2,560,88,"band molding at the joint",{color:PRO,size:9});
+/* the mini-hutch bay, unchanged, at its true place */
+s2.appendChild(r2.rectangle(64,72,201,87,{roughness:1.3,stroke:INK,strokeWidth:1.6,fill:"none"}));
+s2.appendChild(r2.rectangle(74,79,181,73,{roughness:1,stroke:SOFT,strokeWidth:.7,fill:OMIST,fillStyle:"solid"}));
+[102,128].forEach(y=>s2.appendChild(r2.rectangle(74,y,181,8,{roughness:1.1,stroke:INK,strokeWidth:1.1,fill:OAK+"dd",fillStyle:"solid"})));
+[[92,94],[122,90],[158,94],[196,90],[228,94],[100,122],[136,118],[176,122],[214,118]].forEach(([x,y],i)=>{
+  if(i%2)s2.appendChild(r2.circle(x,y+2,10,{roughness:1.5,stroke:INK,strokeWidth:.9,fill:"none"}));
+  else s2.appendChild(r2.rectangle(x-5,y-7,10,15,{roughness:1.5,stroke:INK,strokeWidth:.9,fill:"none"}));
+});
+label(s2,64,176,"mini-hutch bay, unchanged",{color:PRO,size:9.5});
+/* window at scanned width; valance question above it */
+s2.appendChild(r2.rectangle(261,82,308,107,{roughness:1.3,stroke:INK,strokeWidth:1.8,fill:"#fdf6e3",fillStyle:"solid"}));
+s2.appendChild(r2.line(415,82,415,189,{roughness:1.2,stroke:INK,strokeWidth:1}));
+dashify(s2.appendChild(r2.line(265,76,565,76,{roughness:1,stroke:MARI,strokeWidth:3,fill:"none"})),"7,5");
+label(s2,270,206,"wood continues as flush valance IF 4–6\"+ gap above frame",{color:PRO,size:9.5});
+label(s2,270,221,"tight gap? stop wood at cabinets — the light outranks the wood",{color:PRO,size:9.5});
+label(s2,578,100,"strip continues —",{color:PRO,size:9});
+label(s2,578,114,"night task light",{color:PRO,size:9});
+/* north upper, clad-topped closed section at its scanned width */
+s2.appendChild(r2.rectangle(588,72,142,87,{roughness:1.3,stroke:INK,strokeWidth:1.6,fill:OAK+"cc",fillStyle:"solid"}));
+/* closed base below — the dresser's bottom half */
+s2.appendChild(r2.rectangle(52,199,678,101,{roughness:1.2,stroke:INK,strokeWidth:1.4,fill:OAK+"bb",fillStyle:"solid"}));
+s2.appendChild(r2.line(52,209,730,209,{roughness:1,stroke:"#e8dcc0",strokeWidth:.8}));
+label(s2,30,320,"closed base, open middle, solid cap — a kitchen dresser the length of the wall",{size:9});
+
+/* ---- explorations: chip row that unfolds one drawing at a time ---- */
+const expls={
+  "expl-work":"West wall — working run",
+  "expl-nook":"Nook wall — pendant & seat",
+  "expl-step1":"The mini-hutch — one open bay",
+  "expl-step2":"The dresser wall — full run"
+};
+const explegend=document.getElementById("explegend");
+let openExpl=null;
+Object.entries(expls).forEach(([id,name])=>{
+  const b=document.createElement("button");
+  b.className="chip"; b.textContent=name; b.id="chip-"+id;
+  b.addEventListener("click",()=>{
+    openExpl=(openExpl===id)?null:id;
+    Object.keys(expls).forEach(k=>{
+      document.getElementById(k).classList.toggle("open",k===openExpl);
+      document.getElementById("chip-"+k).classList.toggle("active",k===openExpl);
+    });
+    if(openExpl===id) document.getElementById(id).scrollIntoView({behavior:"smooth",block:"nearest"});
+  });
+  explegend.appendChild(b);
+});
+</script>
+</body>
+</html>
